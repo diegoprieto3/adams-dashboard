@@ -1,0 +1,34 @@
+exports.handler = async function(event) {
+  const callId = event.queryStringParameters?.callId;
+  if (!callId) {
+    return { statusCode: 400, body: 'Missing callId' };
+  }
+
+  const API_KEY = 'e19f3aaf-e171-4e14-80c4-57c4139328e7';
+
+  try {
+    const response = await fetch(`https://api.vapi.ai/call/${callId}/mono-recording`, {
+      headers: { 'Authorization': `Bearer ${API_KEY}` },
+      redirect: 'follow'
+    });
+
+    if (!response.ok) {
+      return { statusCode: response.status, body: 'Failed to fetch recording' };
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'audio/wav',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: buffer.toString('base64'),
+      isBase64Encoded: true
+    };
+  } catch(e) {
+    return { statusCode: 500, body: 'Error: ' + e.message };
+  }
+};
